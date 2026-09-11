@@ -11,7 +11,7 @@ export const RARITY_TIERS: RarityTier[] = [
 ];
 
 export const RARITY_TIER_STYLES: Record<RarityTier, { text: string; bg: string; dot: string }> = {
-  "Least Concern": { text: "text-text-muted", bg: "bg-black/5", dot: "bg-text-muted" },
+  "Least Concern": { text: "text-text-muted", bg: "bg-text-muted/10", dot: "bg-text-muted" },
   "Near Threatened": { text: "text-accent", bg: "bg-accent/10", dot: "bg-accent" },
   Vulnerable: { text: "text-warning", bg: "bg-warning/10", dot: "bg-warning" },
   Endangered: { text: "text-endangered", bg: "bg-endangered/10", dot: "bg-endangered" },

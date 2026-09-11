@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { LogoMark } from "@/components/LogoMark";
+import { NetworkBackground } from "@/components/NetworkBackground";
 
 export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
@@ -26,11 +27,13 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-8 px-6">
-      <div className="text-center">
+    <main className="relative flex min-h-screen flex-col items-center justify-center gap-8 overflow-hidden bg-background px-6">
+      <NetworkBackground />
+
+      <div className="relative text-center">
         <LogoMark size={56} className="mx-auto mb-3" />
-        <h1 className="text-2xl font-semibold tracking-tight text-primary">Faunetra</h1>
-        <p className="mt-2 max-w-sm text-sm text-text-muted">
+        <h1 className="font-heading text-3xl font-bold tracking-tight text-primary">Faunetra</h1>
+        <p className="mt-3 max-w-sm text-sm text-text-muted">
           Mine coins for real endangered species and track a transparent, symbolic conservation
           impact.
         </p>
@@ -39,15 +42,15 @@ export default function LoginPage() {
       <button
         onClick={signInWithGoogle}
         disabled={loading}
-        className="flex items-center gap-3 rounded-lg border border-border bg-surface px-5 py-2.5 text-sm font-medium text-text-primary transition hover:bg-background disabled:opacity-60"
+        className="relative flex items-center gap-3 rounded-lg border border-border bg-surface px-5 py-2.5 text-sm font-medium text-text-primary transition hover:bg-background disabled:opacity-60"
       >
         <GoogleIcon />
         {loading ? "Redirecting…" : "Continue with Google"}
       </button>
 
-      {error && <p className="max-w-sm text-center text-sm text-error">{error}</p>}
+      {error && <p className="relative max-w-sm text-center text-sm text-error">{error}</p>}
 
-      <p className="max-w-sm text-center text-xs text-text-muted">
+      <p className="relative max-w-sm text-center text-xs text-text-muted">
         Coins have no real-world monetary value. Pledges are symbolic; see the Impact Fund page
         for the developer&apos;s real, separately-logged donations.
       </p>

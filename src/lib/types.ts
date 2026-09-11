@@ -15,6 +15,17 @@ export type RarityTier =
 export type TransactionType = "INITIAL_GRANT" | "MINING_REWARD" | "TRANSFER" | "PLEDGE";
 export type TransactionStatus = "CONFIRMED" | "FAILED";
 export type MiningSessionStatus = "ACTIVE" | "SETTLED";
+export type AvatarId =
+  | "octopus"
+  | "turtle"
+  | "seahorse"
+  | "fish"
+  | "crab"
+  | "shrimp"
+  | "jellyfish"
+  | "starfish"
+  | "seal";
+export type ThemePreference = "light" | "dark" | "system";
 
 export interface Database {
   public: {
@@ -25,6 +36,8 @@ export interface Database {
           email: string;
           display_name: string | null;
           leaderboard_opt_in: boolean;
+          avatar_id: AvatarId;
+          theme_preference: ThemePreference;
           created_at: string;
         };
         Insert: Partial<Database["public"]["Tables"]["profiles"]["Row"]> & { id: string; email: string };
@@ -162,7 +175,18 @@ export interface Database {
       };
       get_leaderboard: {
         Args: Record<string, never>;
-        Returns: { display_name: string; total_balance: number }[];
+        Returns: { user_id: string; display_name: string; avatar_id: AvatarId; total_balance: number }[];
+      };
+      get_public_profile: {
+        Args: { p_user_id: string };
+        Returns: {
+          display_name: string;
+          avatar_id: AvatarId;
+          species_name: string;
+          species_symbol: string;
+          rarity_tier: RarityTier;
+          balance: number;
+        }[];
       };
     };
   };

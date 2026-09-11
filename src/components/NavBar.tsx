@@ -7,8 +7,10 @@ const LINKS = [
   { href: "/mining", label: "Mining" },
   { href: "/send", label: "Send" },
   { href: "/history", label: "History" },
+  { href: "/leaderboard", label: "Leaderboard" },
   { href: "/impact", label: "Impact Fund" },
   { href: "/profile", label: "Profile" },
+  { href: "/settings", label: "Settings" },
 ];
 
 export function NavBar({ signedIn }: { signedIn: boolean }) {

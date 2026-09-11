@@ -5,24 +5,31 @@ export function SpeciesCard({
   species,
   selected,
   onSelect,
+  attemptsUsedToday,
+  dailyLimit,
 }: {
   species: Species;
   selected: boolean;
   onSelect: () => void;
+  attemptsUsedToday: number;
+  dailyLimit: number;
 }) {
   const tier = RARITY_TIER_STYLES[species.rarity_tier];
   const remaining = Math.max(species.total_supply - species.circulating_supply, 0);
   const pctMined = Math.min((species.circulating_supply / species.total_supply) * 100, 100);
   const fullyDiscovered = remaining <= 0;
+  const attemptsLeft = Math.max(dailyLimit - attemptsUsedToday, 0);
+  const outOfAttempts = attemptsLeft <= 0;
+  const disabled = fullyDiscovered || outOfAttempts;
 
   return (
     <button
       type="button"
-      onClick={fullyDiscovered ? undefined : onSelect}
-      disabled={fullyDiscovered}
+      onClick={disabled ? undefined : onSelect}
+      disabled={disabled}
       className={`relative rounded-lg border p-4 text-left transition ${
-        fullyDiscovered
-          ? "cursor-not-allowed border-border bg-black/[0.02] opacity-60 grayscale"
+        disabled
+          ? "cursor-not-allowed border-border bg-primary/5 opacity-60 grayscale"
           : selected
             ? "border-primary bg-primary/5"
             : "border-border bg-surface hover:border-accent"
@@ -49,16 +56,19 @@ export function SpeciesCard({
       </span>
 
       <div className="mt-3">
-        <div className="h-1.5 w-full overflow-hidden rounded-full bg-black/5">
-          <div
-            className={`h-full rounded-full ${tier.dot}`}
-            style={{ width: `${pctMined}%` }}
-          />
+        <div className="h-1.5 w-full overflow-hidden rounded-full bg-primary/10">
+          <div className={`h-full rounded-full ${tier.dot}`} style={{ width: `${pctMined}%` }} />
         </div>
         <div className="mt-1 font-numeric text-xs tabular-nums text-text-muted">
           {remaining.toLocaleString()} / {species.total_supply.toLocaleString()} remaining
         </div>
       </div>
+
+      {!fullyDiscovered && (
+        <div className="mt-2 font-numeric text-xs tabular-nums text-text-muted">
+          {outOfAttempts ? "No discoveries left today" : `${attemptsLeft} / ${dailyLimit} discoveries left today`}
+        </div>
+      )}
     </button>
   );
 }

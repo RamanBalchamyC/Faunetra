@@ -1,11 +1,15 @@
 @import "tailwindcss";
 
 /* Faunetra design tokens — derived from the logo (deep teal octopus +
-   lighter teal node-network pattern on off-white). Single brand palette,
-   no dark-mode variant yet (not specified in the brand brief) — if dark
-   mode is wanted later, define a second block here rather than relying on
-   prefers-color-scheme against these tokens, since they weren't designed
-   as a light/dark pair. */
+   lighter teal node-network pattern on off-white).
+
+   Theme resolution (Phase 3):
+     - No `data-theme` attribute on <html>  -> follow OS preference via
+       `prefers-color-scheme` (profile.theme_preference = 'system').
+     - `data-theme="light"` / `data-theme="dark"` -> explicit override,
+       wins regardless of OS preference (profile.theme_preference =
+       'light' | 'dark'). Set server-side in src/app/layout.tsx from the
+       user's profile so there's no flash-of-wrong-theme on load. */
 :root {
   --color-primary: #0d3b3e; /* deep teal — primary buttons, headers, Critically Endangered */
   --color-accent: #3a9188; /* lighter teal — links, active states, Near Threatened */
@@ -18,6 +22,36 @@
   --color-error: #dc2626;
   --color-endangered: #c2410c; /* deep amber/orange — distinct from warning, one tier below Critically Endangered */
   --color-border: #e5e2dc; /* thin borders instead of drop shadows — flat, geometric UI */
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --color-primary: #4fd1c5;
+    --color-accent: #38bdf8;
+    --color-background: #0f1414;
+    --color-surface: #1a2323;
+    --color-text-primary: #f3f4f2;
+    --color-text-muted: #9ca3af;
+    --color-success: #4ade80;
+    --color-warning: #fbbf24;
+    --color-error: #f87171;
+    --color-endangered: #fb923c;
+    --color-border: #2a3434;
+  }
+}
+
+:root[data-theme="dark"] {
+  --color-primary: #4fd1c5;
+  --color-accent: #38bdf8;
+  --color-background: #0f1414;
+  --color-surface: #1a2323;
+  --color-text-primary: #f3f4f2;
+  --color-text-muted: #9ca3af;
+  --color-success: #4ade80;
+  --color-warning: #fbbf24;
+  --color-error: #f87171;
+  --color-endangered: #fb923c;
+  --color-border: #2a3434;
 }
 
 @theme inline {
@@ -33,11 +67,13 @@
   --color-endangered: var(--color-endangered);
   --color-border: var(--color-border);
   --font-sans: var(--font-inter);
+  --font-heading: var(--font-poppins);
 }
 
 body {
   background: var(--color-background);
   color: var(--color-text-primary);
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 /* Node-and-line "typing" indicator for the AI assistant — three nodes pulse

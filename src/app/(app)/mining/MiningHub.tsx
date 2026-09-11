@@ -1,130 +1,102 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { Species } from "@/lib/types";
+import { getTriviaForSpecies } from "@/lib/species-trivia";
 import { SpeciesCard } from "./SpeciesCard";
+import { TriviaRound } from "./TriviaRound";
 import { NodeRing } from "./NodeRing";
 
-type ActiveSession = { id: string; speciesId: string; startedAt: number };
+const DAILY_LIMIT = 5;
+const QUESTIONS_PER_ROUND = 3;
 
-const BASE_RATE = 1;
-const MAX_CONTRIBUTION_SCORE = 10;
-// Contribution score climbs by 1 every 30s the tab stays open on this page,
-// capped server-side too — see settle_mining_session in the migration for
-// why this is a placeholder, not a real anti-cheat design.
-const SCORE_INCREMENT_MS = 30_000;
+type Stage =
+  | { kind: "picking" }
+  | { kind: "trivia"; sessionId: string; species: Species }
+  | { kind: "result"; species: Species; correctCount: number; reward: number };
 
-export function MiningHub({ species }: { species: Species[] }) {
+export function MiningHub({
+  species,
+  attemptsUsedToday,
+}: {
+  species: Species[];
+  attemptsUsedToday: Record<string, number>;
+}) {
   const router = useRouter();
-  const [session, setSession] = useState<ActiveSession | null>(null);
-  const firstSelectable = species.find((s) => s.circulating_supply < s.total_supply);
-  const [selectedSpeciesId, setSelectedSpeciesId] = useState(firstSelectable?.id ?? "");
-  const [now, setNow] = useState(() => Date.now());
+  const [stage, setStage] = useState<Stage>({ kind: "picking" });
+  const [selectedSpeciesId, setSelectedSpeciesId] = useState(
+    species.find((s) => s.total_supply > s.circulating_supply && (attemptsUsedToday[s.id] ?? 0) < DAILY_LIMIT)?.id ?? ""
+  );
   const [status, setStatus] = useState<{ kind: "idle" | "loading" | "error"; message?: string }>({
     kind: "idle",
   });
 
-  useEffect(() => {
-    if (!session) return;
-    const interval = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(interval);
-  }, [session]);
-
-  const elapsedMs = session ? now - session.startedAt : 0;
-  const contributionScore = session
-    ? Math.min(Math.floor(elapsedMs / SCORE_INCREMENT_MS) + 1, MAX_CONTRIBUTION_SCORE)
-    : 0;
-  const hoursElapsed = elapsedMs / (1000 * 60 * 60);
-  const estimatedReward = useMemo(
-    () => BASE_RATE * contributionScore * hoursElapsed,
-    [contributionScore, hoursElapsed]
-  );
-
-  async function startMining() {
-    if (!selectedSpeciesId) return;
+  async function startDiscovery() {
+    const selected = species.find((s) => s.id === selectedSpeciesId);
+    if (!selected) return;
     setStatus({ kind: "loading" });
+
     const supabase = createClient();
-    const { data, error } = await supabase.rpc("start_mining_session", {
-      p_species_id: selectedSpeciesId,
+    const { data: sessionId, error } = await supabase.rpc("start_mining_session", {
+      p_species_id: selected.id,
     });
     if (error) {
       setStatus({ kind: "error", message: error.message });
       return;
     }
-    setSession({ id: data as string, speciesId: selectedSpeciesId, startedAt: Date.now() });
     setStatus({ kind: "idle" });
+    setStage({ kind: "trivia", sessionId: sessionId as string, species: selected });
   }
 
-  async function stopAndClaim() {
-    if (!session) return;
+  async function handleTriviaComplete(sessionId: string, targetSpecies: Species, correctCount: number) {
     setStatus({ kind: "loading" });
     const supabase = createClient();
-    const { error } = await supabase.rpc("settle_mining_session", {
-      p_session_id: session.id,
-      p_contribution_score: contributionScore,
+    const { data: reward, error } = await supabase.rpc("settle_mining_session", {
+      p_session_id: sessionId,
+      p_contribution_score: correctCount,
     });
+    setStatus({ kind: "idle" });
+
     if (error) {
       setStatus({ kind: "error", message: error.message });
+      setStage({ kind: "picking" });
       return;
     }
-    setSession(null);
-    setStatus({ kind: "idle" });
+
+    setStage({ kind: "result", species: targetSpecies, correctCount, reward: (reward as number) ?? 0 });
     router.refresh();
   }
 
-  const selectedSpecies = species.find((s) => s.id === (session?.speciesId ?? selectedSpeciesId));
-
-  if (session) {
+  if (stage.kind === "trivia") {
     return (
-      <div className="max-w-md">
-        <div className="flex flex-col items-center rounded-lg border border-border bg-surface p-8">
-          <div className="text-sm text-text-muted">Mining</div>
-          <div className="text-lg font-semibold">
-            {selectedSpecies?.name}
-            {selectedSpecies?.scientific_name && (
-              <span className="ml-1 text-sm font-normal italic text-text-muted">
-                ({selectedSpecies.scientific_name})
-              </span>
-            )}
-          </div>
+      <TriviaRound
+        questions={getTriviaForSpecies(stage.species.symbol).slice(0, QUESTIONS_PER_ROUND)}
+        onComplete={(correctCount) => handleTriviaComplete(stage.sessionId, stage.species, correctCount)}
+      />
+    );
+  }
 
-          <div className="relative mt-6 flex items-center justify-center">
-            <NodeRing value={contributionScore} max={MAX_CONTRIBUTION_SCORE} />
-            <div className="absolute flex flex-col items-center">
-              <div className="font-numeric text-2xl font-semibold tabular-nums">
-                {formatDuration(elapsedMs)}
-              </div>
-              <div className="text-xs text-text-muted">elapsed</div>
-            </div>
-          </div>
-
-          <div className="mt-6 grid w-full grid-cols-2 gap-4 text-sm">
-            <div>
-              <div className="text-text-muted">Contribution score</div>
-              <div className="font-numeric font-medium tabular-nums">
-                {contributionScore} / {MAX_CONTRIBUTION_SCORE}
-              </div>
-            </div>
-            <div>
-              <div className="text-text-muted">Estimated reward so far</div>
-              <div className="font-numeric font-medium tabular-nums">
-                {estimatedReward.toFixed(4)} {selectedSpecies?.symbol}
-              </div>
-            </div>
-          </div>
-
-          <button
-            onClick={stopAndClaim}
-            disabled={status.kind === "loading"}
-            className="mt-6 w-full rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-white disabled:opacity-60"
-          >
-            {status.kind === "loading" ? "Settling…" : "Stop & claim reward"}
-          </button>
+  if (stage.kind === "result") {
+    return (
+      <div className="max-w-md rounded-lg border border-border bg-surface p-6 text-center">
+        <div className="flex justify-center">
+          <NodeRing value={stage.correctCount} max={QUESTIONS_PER_ROUND} size={120} />
         </div>
-
-        {status.kind === "error" && <p className="mt-4 text-sm text-error">{status.message}</p>}
+        <p className="mt-4 text-sm text-text-muted">
+          {stage.correctCount} / {QUESTIONS_PER_ROUND} correct
+        </p>
+        <p className="font-numeric mt-1 text-2xl font-semibold tabular-nums">
+          +{Number(stage.reward).toFixed(4)}
+          <span className="ml-1.5 text-sm font-normal text-text-muted">{stage.species.symbol}</span>
+        </p>
+        <button
+          onClick={() => setStage({ kind: "picking" })}
+          className="mt-6 w-full rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-white"
+        >
+          Back to species
+        </button>
       </div>
     );
   }
@@ -138,6 +110,8 @@ export function MiningHub({ species }: { species: Species[] }) {
             species={s}
             selected={s.id === selectedSpeciesId}
             onSelect={() => setSelectedSpeciesId(s.id)}
+            attemptsUsedToday={attemptsUsedToday[s.id] ?? 0}
+            dailyLimit={DAILY_LIMIT}
           />
         ))}
       </div>
@@ -147,21 +121,14 @@ export function MiningHub({ species }: { species: Species[] }) {
       )}
 
       <button
-        onClick={startMining}
+        onClick={startDiscovery}
         disabled={status.kind === "loading" || !selectedSpeciesId}
         className="mt-6 w-full max-w-md rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-white disabled:opacity-60"
       >
-        {status.kind === "loading" ? "Starting…" : "Start mining"}
+        {status.kind === "loading" ? "Starting…" : "Answer 3 questions to discover"}
       </button>
 
       {status.kind === "error" && <p className="mt-4 text-sm text-error">{status.message}</p>}
     </div>
   );
-}
-
-function formatDuration(ms: number) {
-  const totalSeconds = Math.floor(ms / 1000);
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return `${minutes}:${seconds.toString().padStart(2, "0")}`;
 }
