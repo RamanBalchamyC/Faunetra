@@ -33,9 +33,13 @@ comment on column species.source_note is
   'Free-text provenance/confidence note, e.g. flagging a conservation status as an unverified curated fallback (no IUCN API token) pending confirmation against the real IUCN listing.';
 
 -- ---------------------------------------------------------------------------
--- Relabel rarity_tier to real IUCN Red List categories before tightening the
--- check constraint. Existing rows keep their relative rarity, just renamed.
+-- Relabel rarity_tier to real IUCN Red List categories. The old constraint
+-- (from 0001) only allows 'common'/'rare'/'endangered'/'critical', so it
+-- must be dropped BEFORE writing the new label values — writing them first
+-- would violate the constraint that's still in effect at that point.
 -- ---------------------------------------------------------------------------
+
+alter table species drop constraint if exists species_rarity_tier_check;
 
 update species set rarity_tier = case rarity_tier
   when 'common' then 'Least Concern'
@@ -46,7 +50,6 @@ update species set rarity_tier = case rarity_tier
 end
 where rarity_tier in ('common', 'rare', 'endangered', 'critical');
 
-alter table species drop constraint if exists species_rarity_tier_check;
 alter table species add constraint species_rarity_tier_check
   check (rarity_tier in ('Least Concern', 'Near Threatened', 'Vulnerable', 'Endangered', 'Critically Endangered'));
 
