@@ -52,9 +52,11 @@ export async function POST(request: Request) {
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
   // Free-tier-friendly Flash model by default — overridable via env.
-  // Google's free-tier model list/limits change over time; check
-  // ai.google.dev/pricing if this starts erroring or rate-limiting.
-  const model = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+  // Google's model lineup and free-tier limits change frequently; if this
+  // starts 404ing, the API error itself names the current replacement
+  // model (that's how this default was last updated) — check
+  // ai.google.dev/pricing too.
+  const model = process.env.GEMINI_MODEL || "gemini-3.6-flash";
 
   try {
     const response = await ai.models.generateContent({

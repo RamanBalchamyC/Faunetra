@@ -102,7 +102,7 @@ balances already minted (via the `on_auth_user_created` trigger → `grant_initi
   the Google Gemini API (free tier — no billing card required, unlike Anthropic's API) grounded
   in `src/lib/assistant-context.ts` — keep that file current as the product changes. Requires
   `GEMINI_API_KEY` from [aistudio.google.com/apikey](https://aistudio.google.com/apikey);
-  defaults to `gemini-2.5-flash`. Text-only, non-streaming, capped history/message length as a
+  defaults to `gemini-3.6-flash`. Text-only, non-streaming, capped history/message length as a
   lightweight cost/quota guard — not real rate limiting. Free-tier limits change over time; check
   [ai.google.dev/pricing](https://ai.google.dev/pricing) if it starts erroring under load.
 
