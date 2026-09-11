@@ -31,9 +31,26 @@ Open the Supabase SQL Editor and run, in order:
    `settle_mining_session`, `pledge_coins`, `get_leaderboard`), plus the `on_auth_user_created`
    trigger that provisions a profile + starter wallets the moment someone signs up.
 2. `supabase/seed.sql` — the starter species roster (Butterfly, Shark, Rhino, Amur Leopard).
+3. `supabase/migrations/0002_ocean_species_and_iucn_tiers.sql` — Phase 2: relabels rarity tiers to
+   real IUCN Red List categories, adds species metadata columns for the sync script, and retires
+   the non-marine placeholders (safe to run even with existing test wallets/transactions — see
+   the comment at the top of the file).
 
 (If you have the Supabase CLI linked to the project instead, `supabase db push` +
 `supabase db execute -f supabase/seed.sql` do the same thing.)
+
+## 2b. Populate real ocean species (Phase 2)
+
+```
+npm run sync:species
+```
+
+Pulls ~24 curated ocean species from WoRMS + GBIF (both free, no key) and upserts them into
+`species`. Requires `SUPABASE_SERVICE_ROLE_KEY` in `.env.local` (Project Settings → API →
+service_role — **never commit this or share it in chat**, it bypasses RLS). Without an
+`IUCN_API_TOKEN` set, conservation status comes from a curated fallback list flagged in each
+row's `source_note` as unverified — check against [redlist.org](https://www.iucnredlist.org)
+before treating those as authoritative. Safe to re-run any time (upserts by `symbol`).
 
 ## 3. Enable Google sign-in
 
@@ -62,8 +79,8 @@ balances already minted (via the `on_auth_user_created` trigger → `grant_initi
 ## What's implemented
 
 - **Auth**: Google OAuth via Supabase (`src/app/login`, `src/app/auth/callback`), with
-  `src/middleware.ts` refreshing sessions and gating every route except `/login`,
-  `/auth/callback`, and the public `/impact` page.
+  `src/proxy.ts` (Next.js 16's renamed `middleware.ts`) refreshing sessions and gating every
+  route except `/login`, `/auth/callback`, and the public `/impact` page.
 - **Wallet** (`/wallet`): the user's per-species balances.
 - **Send** (`/send`): transfer coins to another user by email, via `POST /api/transfer` →
   `transfer_coins` RPC (row-locked, idempotency-keyed, server-validated balance).
@@ -77,6 +94,16 @@ balances already minted (via the `on_auth_user_created` trigger → `grant_initi
   (`impact_fund_log`), explicitly labeled as a founder-funded pledge, not a corporate program.
 - **Profile** (`/profile`): collection summary + an opt-in leaderboard (`get_leaderboard` RPC,
   exposes only display names of users who've opted in).
+- **Design system** (Phase 2): brand tokens in `src/app/globals.css` (single light palette, no
+  dark mode yet), Inter font, rarity-tier color coding in `src/lib/design.ts`, a placeholder
+  logo mark (`src/components/LogoMark.tsx`) pending the real exports (section 6 of the Phase 2
+  brief), a species card grid + node-ring progress indicator on the Mining Hub.
+- **AI Assistant** (`/api/assistant`, floating action button on every signed-in screen): calls
+  the Anthropic API grounded in `src/lib/assistant-context.ts` — keep that file current as the
+  product changes. Requires `ANTHROPIC_API_KEY`; defaults to `claude-opus-5` but
+  `ANTHROPIC_MODEL=claude-haiku-4-5` is the much cheaper choice for this use case. Text-only,
+  non-streaming, capped history/message length as a lightweight cost guard — not real rate
+  limiting.
 
 ## Non-negotiables this scaffold follows (see the build prompt for the full list)
 
@@ -88,8 +115,11 @@ balances already minted (via the `on_auth_user_created` trigger → `grant_initi
 
 ## Not yet built
 
-- Full species roster / richer species detail pages.
+- Real logo assets (`/public/logo/` at 512/192/32px) — currently a placeholder mark; swap
+  `src/components/LogoMark.tsx` once exports are ready.
 - Mobile (Expo) wrapper and `.apk` build — see Section 2 of the build prompt for the intended
   approach once the web app is stable.
 - A less gameable mining contribution signal (currently a client-reported, server-clamped score —
   fine for a small friends-only trial, not for anything wider).
+- Voice input/output for the assistant, ML-based contribution scoring, expanded species roster —
+  explicitly deferred to Phase 3.

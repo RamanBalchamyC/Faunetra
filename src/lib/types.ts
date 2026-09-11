@@ -3,7 +3,15 @@
 //   npx supabase gen types typescript --project-id <ref> > src/lib/types.ts
 // and re-adding the convenience aliases below.
 
-export type RarityTier = "common" | "rare" | "endangered" | "critical";
+// Real IUCN Red List categories (Phase 2 — see migrations/0002). Least
+// Concern is the lowest-weight tier through Critically Endangered, the
+// heaviest — see RARITY_TIER_STYLES in src/lib/design.ts for color coding.
+export type RarityTier =
+  | "Least Concern"
+  | "Near Threatened"
+  | "Vulnerable"
+  | "Endangered"
+  | "Critically Endangered";
 export type TransactionType = "INITIAL_GRANT" | "MINING_REWARD" | "TRANSFER" | "PLEDGE";
 export type TransactionStatus = "CONFIRMED" | "FAILED";
 export type MiningSessionStatus = "ACTIVE" | "SETTLED";
@@ -33,6 +41,13 @@ export interface Database {
           initial_grant_amount: number;
           description: string | null;
           learn_more_url: string | null;
+          scientific_name: string | null;
+          image_url: string | null;
+          worms_aphia_id: number | null;
+          gbif_key: number | null;
+          is_active: boolean;
+          source_note: string | null;
+          last_synced_at: string | null;
           created_at: string;
         };
         Insert: Partial<Database["public"]["Tables"]["species"]["Row"]>;

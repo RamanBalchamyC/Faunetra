@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LogoMark } from "@/components/LogoMark";
 import { SignOutButton } from "@/components/SignOutButton";
 
 const LINKS = [
@@ -12,9 +13,13 @@ const LINKS = [
 
 export function NavBar({ signedIn }: { signedIn: boolean }) {
   return (
-    <header className="border-b border-neutral-200 dark:border-neutral-800">
+    <header className="border-b border-border bg-surface">
       <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-between gap-4 px-6 py-4">
-        <Link href={signedIn ? "/wallet" : "/login"} className="text-base font-semibold tracking-tight">
+        <Link
+          href={signedIn ? "/wallet" : "/login"}
+          className="flex items-center gap-2 text-base font-semibold tracking-tight text-primary"
+        >
+          <LogoMark size={26} />
           Faunetra
         </Link>
         {signedIn ? (
@@ -23,7 +28,7 @@ export function NavBar({ signedIn }: { signedIn: boolean }) {
               <Link
                 key={link.href}
                 href={link.href}
-                className="text-sm text-neutral-600 hover:text-neutral-900 dark:text-neutral-300 dark:hover:text-neutral-100"
+                className="text-sm text-text-muted hover:text-primary"
               >
                 {link.label}
               </Link>
@@ -32,15 +37,12 @@ export function NavBar({ signedIn }: { signedIn: boolean }) {
           </nav>
         ) : (
           <nav className="flex items-center gap-5">
-            <Link
-              href="/impact"
-              className="text-sm text-neutral-600 hover:text-neutral-900 dark:text-neutral-300 dark:hover:text-neutral-100"
-            >
+            <Link href="/impact" className="text-sm text-text-muted hover:text-primary">
               Impact Fund
             </Link>
             <Link
               href="/login"
-              className="rounded-md bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white dark:bg-white dark:text-neutral-900"
+              className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-white"
             >
               Sign in
             </Link>

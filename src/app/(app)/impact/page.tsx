@@ -19,7 +19,7 @@ export default async function ImpactPage() {
   return (
     <div>
       <h1 className="text-xl font-semibold tracking-tight">Impact Fund</h1>
-      <p className="mt-2 max-w-2xl text-sm text-neutral-600 dark:text-neutral-400">
+      <p className="mt-2 max-w-2xl text-sm text-text-muted">
         Faunetra coins are symbolic — pledging them does not move real money and is not a
         donation. What&apos;s below is a fully separate, real, founder-funded pledge: periodically,
         the developer personally donates to a real conservation organization, sized loosely
@@ -29,14 +29,14 @@ export default async function ImpactPage() {
       </p>
 
       <div className="mt-8 grid gap-4 sm:grid-cols-2">
-        <div className="rounded-lg border border-neutral-200 p-5 dark:border-neutral-800">
-          <div className="text-sm text-neutral-500">Total coins mined (platform-wide)</div>
+        <div className="rounded-lg border border-border p-5">
+          <div className="text-sm text-text-muted">Total coins mined (platform-wide)</div>
           <div className="mt-2 text-2xl font-semibold tabular-nums">
             {totalMined.toLocaleString()}
           </div>
         </div>
-        <div className="rounded-lg border border-neutral-200 p-5 dark:border-neutral-800">
-          <div className="text-sm text-neutral-500">Real donations to date (founder-funded)</div>
+        <div className="rounded-lg border border-border p-5">
+          <div className="text-sm text-text-muted">Real donations to date (founder-funded)</div>
           <div className="mt-2 text-2xl font-semibold tabular-nums">
             ₹{totalDonatedInr.toLocaleString()}
           </div>
@@ -44,24 +44,24 @@ export default async function ImpactPage() {
       </div>
 
       <h2 className="mt-10 text-base font-semibold">Donation log</h2>
-      <div className="mt-4 divide-y divide-neutral-200 dark:divide-neutral-800">
+      <div className="mt-4 divide-y divide-border">
         {log?.map((entry) => (
           <div key={entry.id} className="py-4 text-sm">
             <div className="flex items-center justify-between">
               <span className="font-medium">{entry.recipient_org}</span>
               <span className="tabular-nums">₹{Number(entry.amount_donated_inr).toLocaleString()}</span>
             </div>
-            <div className="mt-1 text-xs text-neutral-500">
+            <div className="mt-1 text-xs text-text-muted">
               {new Date(entry.donated_at).toLocaleDateString()} · at{" "}
               {Number(entry.total_coins_pledged_at_time).toLocaleString()} coins mined
             </div>
-            {entry.note && <p className="mt-1 text-xs text-neutral-500">{entry.note}</p>}
+            {entry.note && <p className="mt-1 text-xs text-text-muted">{entry.note}</p>}
             {entry.receipt_url && (
               <a
                 href={entry.receipt_url}
                 target="_blank"
                 rel="noreferrer"
-                className="mt-1 inline-block text-xs text-blue-600 underline"
+                className="mt-1 inline-block text-xs text-accent underline"
               >
                 View receipt
               </a>
@@ -70,7 +70,7 @@ export default async function ImpactPage() {
         ))}
 
         {log?.length === 0 && (
-          <p className="py-6 text-sm text-neutral-500">
+          <p className="py-6 text-sm text-text-muted">
             No donations logged yet. The first entry will appear here once made, with a receipt.
           </p>
         )}

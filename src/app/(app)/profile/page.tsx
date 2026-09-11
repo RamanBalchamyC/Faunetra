@@ -20,7 +20,7 @@ export default async function ProfilePage() {
   return (
     <div>
       <h1 className="text-xl font-semibold tracking-tight">Profile</h1>
-      <div className="mt-2 text-sm text-neutral-500">{profile?.display_name ?? user.email}</div>
+      <div className="mt-2 text-sm text-text-muted">{profile?.display_name ?? user.email}</div>
 
       <h2 className="mt-8 text-base font-semibold">Your collection</h2>
       <div className="mt-4 space-y-2">
@@ -35,7 +35,7 @@ export default async function ProfilePage() {
       </div>
 
       <h2 className="mt-10 text-base font-semibold">Leaderboard</h2>
-      <p className="mt-1 text-sm text-neutral-500">
+      <p className="mt-1 text-sm text-text-muted">
         Opt-in only — most users won&apos;t appear here unless they choose to.
       </p>
       <div className="mt-3">
@@ -53,7 +53,7 @@ export default async function ProfilePage() {
           </div>
         ))}
         {leaderboard?.length === 0 && (
-          <p className="text-sm text-neutral-500">No one has opted in yet.</p>
+          <p className="text-sm text-text-muted">No one has opted in yet.</p>
         )}
       </div>
     </div>

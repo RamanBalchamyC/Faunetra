@@ -48,13 +48,13 @@ export function SendForm({ wallets }: { wallets: WalletWithSpecies[] }) {
   }
 
   if (wallets.length === 0) {
-    return <p className="text-sm text-neutral-500">You don&apos;t have any wallets to send from yet.</p>;
+    return <p className="text-sm text-text-muted">You don&apos;t have any wallets to send from yet.</p>;
   }
 
   return (
     <form onSubmit={handleSubmit} className="max-w-sm space-y-5">
       <div>
-        <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
+        <label className="block text-sm font-medium text-text-primary">
           Recipient email
         </label>
         <input
@@ -63,16 +63,16 @@ export function SendForm({ wallets }: { wallets: WalletWithSpecies[] }) {
           value={recipientEmail}
           onChange={(e) => setRecipientEmail(e.target.value)}
           placeholder="friend@example.com"
-          className="mt-1.5 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900"
+          className="mt-1.5 w-full rounded-md border border-border px-3 py-2 text-sm"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Species</label>
+        <label className="block text-sm font-medium text-text-primary">Species</label>
         <select
           value={speciesId}
           onChange={(e) => setSpeciesId(e.target.value)}
-          className="mt-1.5 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900"
+          className="mt-1.5 w-full rounded-md border border-border px-3 py-2 text-sm"
         >
           {wallets.map((w) => (
             <option key={w.species_id} value={w.species_id}>
@@ -83,7 +83,7 @@ export function SendForm({ wallets }: { wallets: WalletWithSpecies[] }) {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Amount</label>
+        <label className="block text-sm font-medium text-text-primary">Amount</label>
         <input
           type="number"
           required
@@ -92,20 +92,20 @@ export function SendForm({ wallets }: { wallets: WalletWithSpecies[] }) {
           max={selectedWallet ? Number(selectedWallet.balance) : undefined}
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
-          className="mt-1.5 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900"
+          className="mt-1.5 w-full rounded-md border border-border px-3 py-2 text-sm"
         />
       </div>
 
       <button
         type="submit"
         disabled={status.kind === "loading"}
-        className="w-full rounded-md bg-neutral-900 px-4 py-2.5 text-sm font-medium text-white disabled:opacity-60 dark:bg-white dark:text-neutral-900"
+        className="w-full rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-white disabled:opacity-60"
       >
         {status.kind === "loading" ? "Sending…" : "Send coins"}
       </button>
 
-      {status.kind === "error" && <p className="text-sm text-red-600">{status.message}</p>}
-      {status.kind === "success" && <p className="text-sm text-green-600">{status.message}</p>}
+      {status.kind === "error" && <p className="text-sm text-error">{status.message}</p>}
+      {status.kind === "success" && <p className="text-sm text-success">{status.message}</p>}
     </form>
   );
 }

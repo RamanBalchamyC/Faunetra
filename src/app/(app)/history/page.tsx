@@ -29,7 +29,7 @@ export default async function HistoryPage({
   return (
     <div>
       <h1 className="text-xl font-semibold tracking-tight">Transaction History</h1>
-      <p className="mt-1 text-sm text-neutral-500">
+      <p className="mt-1 text-sm text-text-muted">
         A chronological ledger of everything that has happened to your wallets.
       </p>
 
@@ -37,7 +37,7 @@ export default async function HistoryPage({
         <select
           name="species"
           defaultValue={speciesFilter ?? ""}
-          className="rounded-md border border-neutral-300 px-2 py-1.5 dark:border-neutral-700 dark:bg-neutral-900"
+          className="rounded-md border border-border px-2 py-1.5"
         >
           <option value="">All species</option>
           {allSpecies.map((s) => (
@@ -49,7 +49,7 @@ export default async function HistoryPage({
         <select
           name="type"
           defaultValue={typeFilter ?? ""}
-          className="rounded-md border border-neutral-300 px-2 py-1.5 dark:border-neutral-700 dark:bg-neutral-900"
+          className="rounded-md border border-border px-2 py-1.5"
         >
           <option value="">All types</option>
           <option value="INITIAL_GRANT">Initial grant</option>
@@ -59,15 +59,15 @@ export default async function HistoryPage({
         </select>
         <button
           type="submit"
-          className="rounded-md border border-neutral-300 px-3 py-1.5 dark:border-neutral-700"
+          className="rounded-md border border-border px-3 py-1.5"
         >
           Filter
         </button>
       </form>
 
-      {error && <p className="mt-6 text-sm text-red-600">Could not load history: {error.message}</p>}
+      {error && <p className="mt-6 text-sm text-error">Could not load history: {error.message}</p>}
 
-      <div className="mt-6 divide-y divide-neutral-200 dark:divide-neutral-800">
+      <div className="mt-6 divide-y divide-border">
         {transactions?.map((tx) => {
           const direction = walletIds.has(tx.to_wallet_id ?? "")
             ? "in"
@@ -79,17 +79,17 @@ export default async function HistoryPage({
             <div key={tx.id} className="flex items-center justify-between py-3 text-sm">
               <div>
                 <div className="font-medium">{formatType(tx.type)}</div>
-                <div className="text-xs text-neutral-500">
+                <div className="text-xs text-text-muted">
                   {new Date(tx.created_at).toLocaleString()}
                 </div>
               </div>
               <div
                 className={
                   direction === "in"
-                    ? "font-medium text-green-600"
+                    ? "font-medium text-success"
                     : direction === "out"
-                      ? "font-medium text-red-600"
-                      : "font-medium text-neutral-500"
+                      ? "font-medium text-error"
+                      : "font-medium text-text-muted"
                 }
               >
                 {direction === "in" ? "+" : direction === "out" ? "-" : ""}
@@ -100,7 +100,7 @@ export default async function HistoryPage({
         })}
 
         {transactions?.length === 0 && (
-          <p className="py-6 text-sm text-neutral-500">No transactions yet.</p>
+          <p className="py-6 text-sm text-text-muted">No transactions yet.</p>
         )}
       </div>
     </div>

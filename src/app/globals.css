@@ -1,26 +1,60 @@
 @import "tailwindcss";
 
+/* Faunetra design tokens — derived from the logo (deep teal octopus +
+   lighter teal node-network pattern on off-white). Single brand palette,
+   no dark-mode variant yet (not specified in the brand brief) — if dark
+   mode is wanted later, define a second block here rather than relying on
+   prefers-color-scheme against these tokens, since they weren't designed
+   as a light/dark pair. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --color-primary: #0d3b3e; /* deep teal — primary buttons, headers, Critically Endangered */
+  --color-accent: #3a9188; /* lighter teal — links, active states, Near Threatened */
+  --color-background: #fafaf8; /* off-white — app background */
+  --color-surface: #ffffff; /* cards, elevated surfaces */
+  --color-text-primary: #1a1a1a;
+  --color-text-muted: #6b7280;
+  --color-success: #2f9e5c;
+  --color-warning: #d97706; /* Vulnerable */
+  --color-error: #dc2626;
+  --color-endangered: #c2410c; /* deep amber/orange — distinct from warning, one tier below Critically Endangered */
+  --color-border: #e5e2dc; /* thin borders instead of drop shadows — flat, geometric UI */
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-primary: var(--color-primary);
+  --color-accent: var(--color-accent);
+  --color-background: var(--color-background);
+  --color-surface: var(--color-surface);
+  --color-text-primary: var(--color-text-primary);
+  --color-text-muted: var(--color-text-muted);
+  --color-success: var(--color-success);
+  --color-warning: var(--color-warning);
+  --color-error: var(--color-error);
+  --color-endangered: var(--color-endangered);
+  --color-border: var(--color-border);
+  --font-sans: var(--font-inter);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-background);
+  color: var(--color-text-primary);
+}
+
+/* Node-and-line "typing" indicator for the AI assistant — three nodes pulse
+   in sequence along a thin connecting line, echoing the logo's network
+   motif instead of a generic spinner. */
+@keyframes node-pulse {
+  0%, 80%, 100% { opacity: 0.25; transform: scale(0.85); }
+  40% { opacity: 1; transform: scale(1); }
+}
+.node-typing-dot {
+  animation: node-pulse 1.2s ease-in-out infinite;
+}
+
+/* Numbers (balances, rates, supply counts) stay tabular for alignment —
+   the "precise, data-driven" feel from the logo — without switching body
+   text to an actual monospace family. Apply alongside Tailwind's
+   `tabular-nums` utility class at each call site. */
+.font-numeric {
+  font-variant-numeric: tabular-nums;
 }

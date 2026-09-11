@@ -15,7 +15,7 @@ export default async function SendPage() {
   return (
     <div>
       <h1 className="text-xl font-semibold tracking-tight">Send Coins</h1>
-      <p className="mt-1 text-sm text-neutral-500">
+      <p className="mt-1 text-sm text-text-muted">
         Transfer coins to another Faunetra user by their sign-in email.
       </p>
       <div className="mt-8">
