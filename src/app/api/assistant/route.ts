@@ -1,10 +1,10 @@
-import Anthropic from "@anthropic-ai/sdk";
+import { GoogleGenAI } from "@google/genai";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { ASSISTANT_SYSTEM_PROMPT } from "@/lib/assistant-context";
 
-// Bound worst-case cost per request from a single client — this is a cheap
-// guard, not real rate limiting or abuse prevention.
+// Bound worst-case cost/quota usage per request from a single client — this
+// is a cheap guard, not real rate limiting or abuse prevention.
 const MAX_HISTORY_MESSAGES = 12;
 const MAX_MESSAGE_CHARS = 4000;
 
@@ -21,9 +21,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Not signed in." }, { status: 401 });
   }
 
-  if (!process.env.ANTHROPIC_API_KEY) {
+  if (!process.env.GEMINI_API_KEY) {
     return NextResponse.json(
-      { error: "The AI assistant isn't configured yet (missing ANTHROPIC_API_KEY)." },
+      { error: "The AI assistant isn't configured yet (missing GEMINI_API_KEY)." },
       { status: 501 }
     );
   }
@@ -49,37 +49,40 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "No valid messages provided." }, { status: 400 });
   }
 
-  const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+
+  // Free-tier-friendly Flash model by default — overridable via env.
+  // Google's free-tier model list/limits change over time; check
+  // ai.google.dev/pricing if this starts erroring or rate-limiting.
+  const model = process.env.GEMINI_MODEL || "gemini-2.5-flash";
 
   try {
-    // Model is overridable via ANTHROPIC_MODEL — defaults to Opus 5. For a
-    // zero-budget project, claude-haiku-4-5 is the far cheaper choice for a
-    // short in-app FAQ bot like this one; set ANTHROPIC_MODEL=claude-haiku-4-5
-    // in .env.local / Vercel if you'd rather use that.
-    const model = process.env.ANTHROPIC_MODEL || "claude-opus-5";
-
-    const response = await anthropic.messages.create({
+    const response = await ai.models.generateContent({
       model,
-      max_tokens: 1024, // short FAQ-style replies — deliberately capped for cost/latency
-      system: ASSISTANT_SYSTEM_PROMPT,
-      output_config: { effort: "low" }, // simple Q&A doesn't need deep reasoning
-      messages,
+      contents: messages.map((m) => ({
+        role: m.role === "assistant" ? "model" : "user",
+        parts: [{ text: m.content }],
+      })),
+      config: {
+        systemInstruction: ASSISTANT_SYSTEM_PROMPT,
+        maxOutputTokens: 1024, // short FAQ-style replies — capped for cost/latency
+      },
     });
 
-    const textBlock = response.content.find((b): b is Anthropic.TextBlock => b.type === "text");
-    const reply = textBlock?.text ?? "Sorry, I couldn't come up with a response to that.";
-
+    const reply = response.text ?? "Sorry, I couldn't come up with a response to that.";
     return NextResponse.json({ reply });
   } catch (err) {
-    if (err instanceof Anthropic.AuthenticationError) {
+    const status = (err as { status?: number })?.status;
+    if (status === 401 || status === 403) {
       return NextResponse.json({ error: "AI assistant misconfigured (invalid API key)." }, { status: 500 });
     }
-    if (err instanceof Anthropic.RateLimitError) {
-      return NextResponse.json({ error: "The assistant is busy right now — try again shortly." }, { status: 429 });
+    if (status === 429) {
+      return NextResponse.json(
+        { error: "The assistant is busy right now (free-tier rate limit) — try again shortly." },
+        { status: 429 }
+      );
     }
-    if (err instanceof Anthropic.APIError) {
-      return NextResponse.json({ error: `Assistant error: ${err.message}` }, { status: 502 });
-    }
-    return NextResponse.json({ error: "Unexpected error contacting the assistant." }, { status: 500 });
+    const message = err instanceof Error ? err.message : "Unexpected error contacting the assistant.";
+    return NextResponse.json({ error: `Assistant error: ${message}` }, { status: 502 });
   }
 }

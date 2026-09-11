@@ -99,11 +99,12 @@ balances already minted (via the `on_auth_user_created` trigger → `grant_initi
   logo mark (`src/components/LogoMark.tsx`) pending the real exports (section 6 of the Phase 2
   brief), a species card grid + node-ring progress indicator on the Mining Hub.
 - **AI Assistant** (`/api/assistant`, floating action button on every signed-in screen): calls
-  the Anthropic API grounded in `src/lib/assistant-context.ts` — keep that file current as the
-  product changes. Requires `ANTHROPIC_API_KEY`; defaults to `claude-opus-5` but
-  `ANTHROPIC_MODEL=claude-haiku-4-5` is the much cheaper choice for this use case. Text-only,
-  non-streaming, capped history/message length as a lightweight cost guard — not real rate
-  limiting.
+  the Google Gemini API (free tier — no billing card required, unlike Anthropic's API) grounded
+  in `src/lib/assistant-context.ts` — keep that file current as the product changes. Requires
+  `GEMINI_API_KEY` from [aistudio.google.com/apikey](https://aistudio.google.com/apikey);
+  defaults to `gemini-2.5-flash`. Text-only, non-streaming, capped history/message length as a
+  lightweight cost/quota guard — not real rate limiting. Free-tier limits change over time; check
+  [ai.google.dev/pricing](https://ai.google.dev/pricing) if it starts erroring under load.
 
 ## Non-negotiables this scaffold follows (see the build prompt for the full list)
 

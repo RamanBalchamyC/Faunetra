@@ -10,7 +10,7 @@
     "sync:species": "tsx --env-file=.env.local scripts/sync-species.ts"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.125.0",
+    "@google/genai": "^2.22.0",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.116.0",
     "next": "16.3.4",
