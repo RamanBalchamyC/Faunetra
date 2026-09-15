@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
-import { countryCodeToFlag } from "@/lib/countries";
+import { FlagIcon } from "@/components/FlagIcon";
 
 type LeaderboardRow = { user_id: string; display_name: string; country_code: string | null; total_balance: number };
 
@@ -25,8 +25,8 @@ export default async function LeaderboardPage() {
             className="flex items-center gap-4 py-3 hover:bg-primary/5"
           >
             <span className="w-6 text-sm text-text-muted">{i + 1}</span>
-            <span className="flex-1 text-sm font-medium">
-              {row.country_code && <span className="mr-2">{countryCodeToFlag(row.country_code)}</span>}
+            <span className="flex flex-1 items-center gap-2 text-sm font-medium">
+              {row.country_code && <FlagIcon code={row.country_code} />}
               {row.display_name}
             </span>
             <span className="font-numeric text-sm font-medium tabular-nums">

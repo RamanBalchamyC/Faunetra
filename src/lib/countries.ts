@@ -1,8 +1,9 @@
-// ISO 3166-1 alpha-2 country list. Flags are rendered as Unicode flag
-// emoji computed from the code (see countryCodeToFlag) rather than any
-// image/icon package — every code point is just two "regional indicator"
-// characters, which every modern OS renders as a flag automatically. No
-// flag assets to bundle or keep in sync.
+// ISO 3166-1 alpha-2 country list. Flags render via src/components/FlagIcon.tsx
+// (the country-flag-icons package, real SVGs) — NOT Unicode flag emoji.
+// Emoji flags render fine on macOS/iOS/Android but Windows' font stack
+// shows the bare two-letter code instead (by design, no flag glyphs), which
+// isn't a safe bet for a general audience.
+//
 // Not the full ISO-3166 list (~195 countries) — a ~70-country curated
 // subset covering the large majority of likely users. Extend freely; the
 // native <select> in CountrySelector.tsx needs no other changes to grow.
@@ -32,12 +33,6 @@ export const COUNTRIES: { code: string; name: string }[] = [
   { code: "GB", name: "United Kingdom" }, { code: "US", name: "United States" },
   { code: "VN", name: "Vietnam" },
 ].sort((a, b) => a.name.localeCompare(b.name));
-
-export function countryCodeToFlag(code: string | null): string {
-  if (!code || code.length !== 2) return "";
-  const codePoints = [...code.toUpperCase()].map((c) => 127397 + c.charCodeAt(0));
-  return String.fromCodePoint(...codePoints);
-}
 
 export function countryName(code: string | null): string | null {
   if (!code) return null;

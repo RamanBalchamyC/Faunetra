@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
-import { countryCodeToFlag, countryName } from "@/lib/countries";
+import { countryName } from "@/lib/countries";
+import { FlagIcon } from "@/components/FlagIcon";
 import { RARITY_TIER_STYLES } from "@/lib/design";
 import type { RarityTier } from "@/lib/types";
 
@@ -47,8 +48,8 @@ export default async function PublicProfilePage({
 
       <div className="mt-4 flex items-center gap-2">
         {country_code && (
-          <span className="text-2xl" title={countryName(country_code) ?? undefined}>
-            {countryCodeToFlag(country_code)}
+          <span title={countryName(country_code) ?? undefined}>
+            <FlagIcon code={country_code} className="h-6 w-auto rounded-[1px]" />
           </span>
         )}
         <span className="text-lg font-semibold">{display_name}</span>
