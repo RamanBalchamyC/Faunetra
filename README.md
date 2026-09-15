@@ -12,6 +12,8 @@ from.
 - Supabase (Postgres, Auth w/ Google OAuth, Row Level Security)
 - All balance-changing logic lives in Postgres `security definer` RPC functions — the client
   never writes to `wallets` or `transactions` directly.
+- [`mobile/`](mobile/) — an Expo (React Native + react-native-web) app connecting to this exact
+  same Supabase project. See [mobile/README.md](mobile/README.md) for what's ported so far.
 
 ## 1. Create the Supabase project
 
