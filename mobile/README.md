@@ -37,13 +37,15 @@ npm run web       # or: npm run ios / npm run android (needs a simulator/device)
   Android both render flag emoji correctly natively, so this simpler approach is fine here. If
   this app is ever exported to web (`expo export --platform web`) and viewed on Windows, that
   same issue would resurface — swap to a `react-native-svg`-based flag set at that point.
+- **AI assistant**: `components/AssistantWidget.tsx` (FAB + modal chat, rendered over every tab)
+  calls a **Supabase Edge Function** (`../supabase/functions/assistant/`) via
+  `supabase.functions.invoke("assistant", ...)` — one backend shared with the web app if it's
+  ever switched over too, instead of a Next.js-only API route. See the root
+  [README's Edge Function section](../README.md#deploy-the-ai-assistant-edge-function) for the
+  one-time deploy steps (needs `supabase login`, not run yet in this environment).
 
 ## Not yet built
 
-- **AI assistant**: not ported yet. The plan (per the migration brief) is a Supabase Edge
-  Function calling Gemini, callable identically from web/iOS/Android via
-  `supabase.functions.invoke()` — this needs the Supabase CLI logged into your account to deploy,
-  which wasn't available in the environment this was built in. Ask to have this built next.
 - Real on-device testing (Android/iOS) — only the web target has been smoke-tested so far
   (`npx expo start --web`, bundle compiles and renders without errors). Test on a real device via
   Expo Go before trusting this on a phone.

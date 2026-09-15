@@ -76,6 +76,24 @@ before treating those as authoritative. Safe to re-run any time (upserts by `sym
    URL, e.g. `http://localhost:3000/auth/callback` for local dev (and your Vercel URL once
    deployed).
 
+## 3b. Deploy the AI assistant Edge Function
+
+The `mobile/` Expo app calls a Supabase Edge Function (`supabase/functions/assistant/`) instead
+of a Next.js API route, so it works identically from web/iOS/Android. One-time setup:
+
+```
+npx supabase login                                   # opens a browser to authenticate
+npx supabase link --project-ref gknoffytudhsjcxwrwkh  # use your own project ref if different
+npx supabase secrets set GEMINI_API_KEY=<your key> GEMINI_MODEL=gemini-3.6-flash
+npx supabase functions deploy assistant
+```
+
+`GEMINI_API_KEY` here is a **separate secret store** from `.env.local` — Edge Function secrets
+are configured per-project via the CLI (or Dashboard → Edge Functions → Secrets), not read from
+any `.env` file. Get a free-tier key at [aistudio.google.com/apikey](https://aistudio.google.com/apikey).
+The Next.js web app's own assistant (`/api/assistant`) is unaffected — it still reads
+`GEMINI_API_KEY` from `.env.local`/Vercel env vars as before; the two are independent for now.
+
 ## 4. Run it
 
 ```
@@ -153,8 +171,9 @@ balances already minted (via the `on_auth_user_created` trigger → `grant_initi
 
 ## Not yet built
 
-- Mobile (Expo) wrapper and `.apk` build — see Section 2 of the build prompt for the intended
-  approach once the web app is stable.
+- `mobile/` covers auth/wallet/mining/leaderboard/profile/assistant already (see
+  [mobile/README.md](mobile/README.md)) — on-device testing and `eas build` for the sideloadable
+  APK are the remaining steps there.
 - A less gameable mining contribution signal — the quiz score is still client-reported (clamped
   server-side), so a determined user could still inspect network calls to find answers. Fine for
   a small friends-only trial, not for anything wider.
