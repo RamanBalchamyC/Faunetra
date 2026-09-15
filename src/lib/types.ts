@@ -15,16 +15,6 @@ export type RarityTier =
 export type TransactionType = "INITIAL_GRANT" | "MINING_REWARD" | "TRANSFER" | "PLEDGE";
 export type TransactionStatus = "CONFIRMED" | "FAILED";
 export type MiningSessionStatus = "ACTIVE" | "SETTLED";
-export type AvatarId =
-  | "octopus"
-  | "turtle"
-  | "seahorse"
-  | "fish"
-  | "crab"
-  | "shrimp"
-  | "jellyfish"
-  | "starfish"
-  | "seal";
 export type ThemePreference = "light" | "dark" | "system";
 
 export interface Database {
@@ -36,8 +26,11 @@ export interface Database {
           email: string;
           display_name: string | null;
           leaderboard_opt_in: boolean;
-          avatar_id: AvatarId;
+          country_code: string | null;
           theme_preference: ThemePreference;
+          current_streak: number;
+          longest_streak: number;
+          last_mined_date: string | null;
           created_at: string;
         };
         Insert: Partial<Database["public"]["Tables"]["profiles"]["Row"]> & { id: string; email: string };
@@ -139,6 +132,16 @@ export interface Database {
         Insert: never;
         Update: never;
       };
+      mining_question_seen: {
+        Row: {
+          user_id: string;
+          species_id: string;
+          question_key: string;
+          seen_at: string;
+        };
+        Insert: { user_id: string; species_id: string; question_key: string };
+        Update: never;
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -175,13 +178,13 @@ export interface Database {
       };
       get_leaderboard: {
         Args: Record<string, never>;
-        Returns: { user_id: string; display_name: string; avatar_id: AvatarId; total_balance: number }[];
+        Returns: { user_id: string; display_name: string; country_code: string | null; total_balance: number }[];
       };
       get_public_profile: {
         Args: { p_user_id: string };
         Returns: {
           display_name: string;
-          avatar_id: AvatarId;
+          country_code: string | null;
           species_name: string;
           species_symbol: string;
           rarity_tier: RarityTier;

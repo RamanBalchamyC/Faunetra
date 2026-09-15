@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { Species } from "@/lib/types";
-import { getTriviaForSpecies } from "@/lib/species-trivia";
+import { pickTriviaRound, type TriviaRoundPick } from "@/lib/mining-questions";
 import { SpeciesCard } from "./SpeciesCard";
 import { TriviaRound } from "./TriviaRound";
 import { NodeRing } from "./NodeRing";
@@ -14,15 +14,17 @@ const QUESTIONS_PER_ROUND = 3;
 
 type Stage =
   | { kind: "picking" }
-  | { kind: "trivia"; sessionId: string; species: Species }
+  | { kind: "trivia"; sessionId: string; species: Species; round: TriviaRoundPick }
   | { kind: "result"; species: Species; correctCount: number; reward: number };
 
 export function MiningHub({
   species,
   attemptsUsedToday,
+  userId,
 }: {
   species: Species[];
   attemptsUsedToday: Record<string, number>;
+  userId: string;
 }) {
   const router = useRouter();
   const [stage, setStage] = useState<Stage>({ kind: "picking" });
@@ -39,24 +41,51 @@ export function MiningHub({
     setStatus({ kind: "loading" });
 
     const supabase = createClient();
-    const { data: sessionId, error } = await supabase.rpc("start_mining_session", {
-      p_species_id: selected.id,
-    });
-    if (error) {
-      setStatus({ kind: "error", message: error.message });
+
+    const [{ data: sessionId, error: sessionError }, { data: seenRows, error: seenError }] = await Promise.all([
+      supabase.rpc("start_mining_session", { p_species_id: selected.id }),
+      supabase.from("mining_question_seen").select("question_key").eq("species_id", selected.id),
+    ]);
+
+    if (sessionError) {
+      setStatus({ kind: "error", message: sessionError.message });
       return;
     }
+    if (seenError) {
+      setStatus({ kind: "error", message: seenError.message });
+      return;
+    }
+
+    const seenKeys = new Set((seenRows ?? []).map((r) => r.question_key));
+    const round = pickTriviaRound(selected.symbol, seenKeys, QUESTIONS_PER_ROUND);
+
     setStatus({ kind: "idle" });
-    setStage({ kind: "trivia", sessionId: sessionId as string, species: selected });
+    setStage({ kind: "trivia", sessionId: sessionId as string, species: selected, round });
   }
 
-  async function handleTriviaComplete(sessionId: string, targetSpecies: Species, correctCount: number) {
+  async function handleTriviaComplete(
+    sessionId: string,
+    targetSpecies: Species,
+    correctCount: number,
+    answeredKeys: string[]
+  ) {
     setStatus({ kind: "loading" });
     const supabase = createClient();
-    const { data: reward, error } = await supabase.rpc("settle_mining_session", {
-      p_session_id: sessionId,
-      p_contribution_score: correctCount,
-    });
+
+    // Record seen questions and settle the session in parallel — the seen
+    // record isn't security-sensitive (RLS just scopes it to the caller),
+    // unlike the reward settlement which goes through the RPC.
+    const [{ data: reward, error }] = await Promise.all([
+      supabase.rpc("settle_mining_session", { p_session_id: sessionId, p_contribution_score: correctCount }),
+      supabase.from("mining_question_seen").upsert(
+        answeredKeys.map((question_key) => ({
+          user_id: userId,
+          species_id: targetSpecies.id,
+          question_key,
+        })),
+        { onConflict: "user_id,species_id,question_key", ignoreDuplicates: true }
+      ),
+    ]);
     setStatus({ kind: "idle" });
 
     if (error) {
@@ -72,8 +101,10 @@ export function MiningHub({
   if (stage.kind === "trivia") {
     return (
       <TriviaRound
-        questions={getTriviaForSpecies(stage.species.symbol).slice(0, QUESTIONS_PER_ROUND)}
-        onComplete={(correctCount) => handleTriviaComplete(stage.sessionId, stage.species, correctCount)}
+        round={stage.round}
+        onComplete={(correctCount, answeredKeys) =>
+          handleTriviaComplete(stage.sessionId, stage.species, correctCount, answeredKeys)
+        }
       />
     );
   }

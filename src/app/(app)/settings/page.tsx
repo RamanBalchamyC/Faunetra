@@ -22,8 +22,8 @@ export default async function SettingsPage() {
       <section className="mt-10">
         <h2 className="text-base font-semibold">Leaderboard</h2>
         <p className="mt-1 text-sm text-text-muted">
-          Off by default. When on, your display name, avatar, and collection totals are visible to
-          other signed-in users on the leaderboard.
+          Off by default. When on, your display name, country flag (if set), and collection
+          totals are visible to other signed-in users on the leaderboard.
         </p>
         <div className="mt-3">
           <LeaderboardOptIn userId={user.id} initialOptIn={profile?.leaderboard_opt_in ?? false} />

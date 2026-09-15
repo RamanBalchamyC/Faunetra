@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import type { WalletWithSpecies } from "@/lib/types";
 import { RARITY_TIER_STYLES } from "@/lib/design";
@@ -14,11 +15,29 @@ export default async function WalletPage() {
 
   return (
     <div>
-      <h1 className="text-xl font-semibold tracking-tight text-primary">Your Wallet</h1>
-      <p className="mt-1 text-sm text-text-muted">
-        Coins have no real-world monetary value — they represent your contribution and
-        collection progress for each species.
-      </p>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-semibold tracking-tight text-primary">Your Wallet</h1>
+          <p className="mt-1 max-w-md text-sm text-text-muted">
+            Coins have no real-world monetary value — they represent your contribution and
+            collection progress for each species.
+          </p>
+        </div>
+        <div className="flex gap-3">
+          <Link
+            href="/send"
+            className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-white"
+          >
+            Send coins
+          </Link>
+          <Link
+            href="/history"
+            className="rounded-md border border-border px-3 py-1.5 text-sm font-medium text-text-primary hover:border-accent hover:text-accent"
+          >
+            History
+          </Link>
+        </div>
+      </div>
 
       {error && (
         <p className="mt-6 rounded-md border border-error/30 bg-error/5 p-4 text-sm text-error">

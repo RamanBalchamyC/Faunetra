@@ -1,16 +1,15 @@
 import Link from "next/link";
 import { LogoMark } from "@/components/LogoMark";
-import { SignOutButton } from "@/components/SignOutButton";
 
+// Primary nav per the Phase 3 nav-restructure brief — just these four.
+// Send lives on the Wallet page; History and Settings live under Profile;
+// Impact Fund is in the page footer (see AppLayout) since it's meant to be
+// reachable by signed-out visitors too, not tucked inside account nav.
 const LINKS = [
   { href: "/wallet", label: "Wallet" },
   { href: "/mining", label: "Mining" },
-  { href: "/send", label: "Send" },
-  { href: "/history", label: "History" },
   { href: "/leaderboard", label: "Leaderboard" },
-  { href: "/impact", label: "Impact Fund" },
   { href: "/profile", label: "Profile" },
-  { href: "/settings", label: "Settings" },
 ];
 
 export function NavBar({ signedIn }: { signedIn: boolean }) {
@@ -35,7 +34,6 @@ export function NavBar({ signedIn }: { signedIn: boolean }) {
                 {link.label}
               </Link>
             ))}
-            <SignOutButton />
           </nav>
         ) : (
           <nav className="flex items-center gap-5">

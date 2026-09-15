@@ -35,10 +35,14 @@ Open the Supabase SQL Editor and run, in order:
    real IUCN Red List categories, adds species metadata columns for the sync script, and retires
    the non-marine placeholders (safe to run even with existing test wallets/transactions — see
    the comment at the top of the file).
-4. `supabase/migrations/0003_theme_avatar_leaderboard_trivia.sql` — Phase 3: `avatar_id` +
-   `theme_preference` on profiles, `get_public_profile` RPC for the leaderboard's tap-through
-   view, `get_leaderboard` extended to return id/avatar, and a daily attempt cap added to
+4. `supabase/migrations/0003_theme_avatar_leaderboard_trivia.sql` — Phase 3: `theme_preference` on
+   profiles, `get_public_profile` RPC for the leaderboard's tap-through view, `get_leaderboard`
+   extended to return id/avatar (superseded by 0004 below), and a daily attempt cap added to
    `start_mining_session` for the trivia-based mining flow.
+5. `supabase/migrations/0004_country_streaks_question_history.sql` — Phase 3 update: drops
+   `avatar_id`, adds `country_code` (replaces the avatar picker with a country/flag selector),
+   adds a `mining_question_seen` table so trivia stops repeating within a session, and adds a
+   daily mining streak maintained inside `settle_mining_session`.
 
 (If you have the Supabase CLI linked to the project instead, `supabase db push` +
 `supabase db execute -f supabase/seed.sql` do the same thing.)
@@ -88,35 +92,47 @@ balances already minted (via the `on_auth_user_created` trigger → `grant_initi
 - **Wallet** (`/wallet`): the user's per-species balances.
 - **Send** (`/send`): transfer coins to another user by email, via `POST /api/transfer` →
   `transfer_coins` RPC (row-locked, idempotency-keyed, server-validated balance).
-- **Mining Hub** (`/mining`): trivia-based "discovery" flow (Phase 3) — pick a species, answer a
-  3-question True/False conservation-trivia round (`src/lib/species-trivia.ts`, authored from
-  general knowledge like the sync script's IUCN fallback — spot-check before treating as fact),
-  then `start_mining_session` + `settle_mining_session` fire back-to-back with the quiz score as
-  `contribution_score`. Capped at 5 attempts/species/day, enforced server-side in
-  `start_mining_session`. Replaces the old idle timer — bounded active engagement instead of
-  unbounded passive accrual. The underlying reward formula is untouched from Phase 1/2.
+- **Navigation**: primary nav is Wallet / Mining / Leaderboard / Profile. Send lives on the
+  Wallet page; History and Settings live under Profile; Impact Fund is a footer link (kept
+  reachable by signed-out visitors, not tucked inside account nav).
+- **Mining Hub** (`/mining`): trivia-based "discovery" flow — pick a species, answer a 3-question
+  True/False conservation-trivia round (`src/lib/species-trivia.ts`, authored from general
+  knowledge like the sync script's IUCN fallback — spot-check before treating as fact; currently
+  6 questions/species, a step toward a 15-20 target), then `start_mining_session` +
+  `settle_mining_session` fire back-to-back with the quiz score as `contribution_score`. A
+  `mining_question_seen` table (`src/lib/mining-questions.ts`) prioritizes unseen questions
+  before recycling any, so a normal session doesn't repeat the same 3. Capped at 5
+  attempts/species/day, enforced server-side. Settling a session also maintains a daily
+  discovery streak (`profiles.current_streak`/`longest_streak`, shown on Mining Hub + Profile) —
+  computed entirely server-side from `mining_sessions` timestamps, not client-trusted. The
+  underlying reward formula is untouched from Phase 1/2.
 - **History** (`/history`): ledger view, filterable by species/type.
 - **Impact Fund** (`/impact`, public): total coins mined platform-wide + the real donation log
   (`impact_fund_log`), explicitly labeled as a founder-funded pledge, not a corporate program.
 - **Leaderboard** (`/leaderboard`, `/leaderboard/[userId]`): ranked by total coins held, opt-in
-  only (`get_leaderboard` RPC). Tapping a row opens a public profile view sourced from
-  `get_public_profile` — a security-definer RPC that returns only display name, avatar, and
-  per-species totals for opted-in users, rather than relaxing RLS on `wallets`/`profiles`
-  directly. No transaction history, email, or transfer activity is ever exposed there.
+  only (`get_leaderboard` RPC), with each user's country flag (if set) next to their name. Tapping
+  a row opens a public profile view sourced from `get_public_profile` — a security-definer RPC
+  that returns only display name, country, and per-species totals for opted-in users, rather than
+  relaxing RLS on `wallets`/`profiles` directly. No transaction history, email, or transfer
+  activity is ever exposed there.
 - **Profile** (`/profile`): editable display name (length + basic profanity check,
-  `src/lib/profanity.ts` — a simple blocklist, not a real moderation system), a fixed avatar
-  picker (`src/components/AvatarIcon.tsx`, 9 flat sea-creature glyphs, no upload), and the
-  collection summary. The leaderboard opt-in toggle lives in `/settings`.
+  `src/lib/profanity.ts` — a simple blocklist, not a real moderation system), an optional country
+  selector (`src/components/CountrySelector.tsx` — a native `<select>` with flag emoji computed
+  from the ISO code, `src/lib/countries.ts`; no flag-image package or avatar illustrations to
+  maintain), the discovery streak, the collection summary, and links to History/Settings/Sign out.
 - **Settings** (`/settings`): theme preference (light/dark/system) and the leaderboard opt-in.
-- **Theming** (Phase 3): light + dark palettes as CSS custom properties in
-  `src/app/globals.css`. `system` follows `prefers-color-scheme` with no `data-theme` attribute;
-  `light`/`dark` set `data-theme` on `<html>` explicitly. Resolved **server-side** from the
-  user's `profiles.theme_preference` in `src/app/layout.tsx` — no client-side flash of the wrong
-  theme. Persisted to the profile row (syncs across devices), not just `localStorage`.
+- **Theming**: light + dark palettes as CSS custom properties in `src/app/globals.css`. `system`
+  follows `prefers-color-scheme` with no `data-theme` attribute; `light`/`dark` set `data-theme`
+  on `<html>` explicitly. Resolved **server-side** from the user's `profiles.theme_preference` in
+  `src/app/layout.tsx` — no client-side flash of the wrong theme. Persisted to the profile row
+  (syncs across devices), not just `localStorage`.
 - **Design system**: brand tokens in `src/app/globals.css`, Inter (body) + Poppins (login
-  headline only) via `next/font`, rarity-tier color coding in `src/lib/design.ts`, the real logo
-  (`public/logo/`, see `scripts/process-logo.mjs`), a subtle node-network background texture on
-  the login page (`src/components/NetworkBackground.tsx`).
+  headline only) via `next/font`, rarity-tier color coding in `src/lib/design.ts`. The real logo
+  is a vector SVG (`public/logo/octopus.svg`, traced from `src/assets/logo/octopus.jpg` via
+  `scripts/vectorize-logo.mjs` — stays crisp at any zoom, unlike the earlier PNG-only version),
+  used for the nav mark, favicon (`src/app/icon.svg`), apple-touch-icon, and the assistant FAB. A
+  subtle node-network background texture sits behind the login page
+  (`src/components/NetworkBackground.tsx`).
 - **AI Assistant** (`/api/assistant`, floating action button on every signed-in screen): calls
   the Google Gemini API (free tier — no billing card required, unlike Anthropic's API) grounded
   in `src/lib/assistant-context.ts` — keep that file current as the product changes. Requires
@@ -140,5 +156,8 @@ balances already minted (via the `on_auth_user_created` trigger → `grant_initi
 - A less gameable mining contribution signal — the quiz score is still client-reported (clamped
   server-side), so a determined user could still inspect network calls to find answers. Fine for
   a small friends-only trial, not for anything wider.
-- Voice AI, ML-based contribution scoring, and additional mini-game variety beyond the trivia
-  round — explicitly deferred past Phase 3.
+- The full 15-20 questions/species trivia target (currently 6/species) — a larger content-
+  authoring pass; the seen-question-tracking architecture is already in place to support it.
+- Weekly species spotlight, achievement badges, and a second mini-game type alongside trivia —
+  good candidates for a following phase per the engagement-mechanics brief.
+- Voice AI and ML-based contribution scoring — explicitly deferred.

@@ -1,9 +1,8 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
-import { AvatarBadge } from "@/components/AvatarIcon";
-import type { AvatarId } from "@/lib/types";
+import { countryCodeToFlag } from "@/lib/countries";
 
-type LeaderboardRow = { user_id: string; display_name: string; avatar_id: AvatarId; total_balance: number };
+type LeaderboardRow = { user_id: string; display_name: string; country_code: string | null; total_balance: number };
 
 export default async function LeaderboardPage() {
   const { supabase } = await requireUser();
@@ -26,8 +25,10 @@ export default async function LeaderboardPage() {
             className="flex items-center gap-4 py-3 hover:bg-primary/5"
           >
             <span className="w-6 text-sm text-text-muted">{i + 1}</span>
-            <AvatarBadge avatarId={row.avatar_id} size={36} />
-            <span className="flex-1 text-sm font-medium">{row.display_name}</span>
+            <span className="flex-1 text-sm font-medium">
+              {row.country_code && <span className="mr-2">{countryCodeToFlag(row.country_code)}</span>}
+              {row.display_name}
+            </span>
             <span className="font-numeric text-sm font-medium tabular-nums">
               {Number(row.total_balance).toLocaleString()}
             </span>

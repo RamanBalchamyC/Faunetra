@@ -1,15 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import type { TriviaQuestion } from "@/lib/species-trivia";
+import type { TriviaRoundPick } from "@/lib/mining-questions";
 
 export function TriviaRound({
-  questions,
+  round,
   onComplete,
 }: {
-  questions: TriviaQuestion[];
-  onComplete: (correctCount: number) => void;
+  round: TriviaRoundPick;
+  onComplete: (correctCount: number, answeredKeys: string[]) => void;
 }) {
+  const { questions, mastered } = round;
   const [step, setStep] = useState(0);
   const [correctCount, setCorrectCount] = useState(0);
   const [revealed, setRevealed] = useState<{ chosen: boolean; correct: boolean } | null>(null);
@@ -28,7 +29,7 @@ export function TriviaRound({
     if (isLast) {
       // correctCount already reflects this question's answer() call, which
       // ran (and re-rendered) before the user could click this button.
-      onComplete(correctCount);
+      onComplete(correctCount, questions.map((q) => q.key));
       return;
     }
     setStep((s) => s + 1);
@@ -37,6 +38,11 @@ export function TriviaRound({
 
   return (
     <div className="max-w-md rounded-lg border border-border bg-surface p-6">
+      {mastered && step === 0 && (
+        <p className="mb-4 rounded-md bg-primary/5 px-3 py-2 text-xs text-primary">
+          🏆 You&apos;ve seen all of this species&apos; questions before — here&apos;s a recap round.
+        </p>
+      )}
       <div className="text-xs text-text-muted">
         Question {step + 1} of {questions.length}
       </div>

@@ -1,12 +1,12 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
-import { AvatarBadge } from "@/components/AvatarIcon";
+import { countryCodeToFlag, countryName } from "@/lib/countries";
 import { RARITY_TIER_STYLES } from "@/lib/design";
-import type { AvatarId, RarityTier } from "@/lib/types";
+import type { RarityTier } from "@/lib/types";
 
 type PublicProfileRow = {
   display_name: string;
-  avatar_id: AvatarId;
+  country_code: string | null;
   species_name: string;
   species_symbol: string;
   rarity_tier: RarityTier;
@@ -37,7 +37,7 @@ export default async function PublicProfilePage({
     );
   }
 
-  const { display_name, avatar_id } = rows[0];
+  const { display_name, country_code } = rows[0];
 
   return (
     <div>
@@ -45,8 +45,12 @@ export default async function PublicProfilePage({
         ← Back to leaderboard
       </Link>
 
-      <div className="mt-4 flex items-center gap-4">
-        <AvatarBadge avatarId={avatar_id} size={56} />
+      <div className="mt-4 flex items-center gap-2">
+        {country_code && (
+          <span className="text-2xl" title={countryName(country_code) ?? undefined}>
+            {countryCodeToFlag(country_code)}
+          </span>
+        )}
         <span className="text-lg font-semibold">{display_name}</span>
       </div>
 

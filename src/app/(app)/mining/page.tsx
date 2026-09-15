@@ -3,7 +3,7 @@ import type { Species } from "@/lib/types";
 import { MiningHub } from "./MiningHub";
 
 export default async function MiningPage() {
-  const { supabase, user } = await requireUser();
+  const { supabase, user, profile } = await requireUser();
 
   const { data: species } = await supabase
     .from("species")
@@ -32,13 +32,22 @@ export default async function MiningPage() {
 
   return (
     <div>
-      <h1 className="text-xl font-semibold tracking-tight">Mining Hub</h1>
-      <p className="mt-1 max-w-md text-sm text-text-muted">
-        Answer a short round of real conservation trivia about a species to discover coins — a few
-        genuine rounds a day, not idle waiting.
-      </p>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-semibold tracking-tight">Mining Hub</h1>
+          <p className="mt-1 max-w-md text-sm text-text-muted">
+            Answer a short round of real conservation trivia about a species to discover coins — a
+            few genuine rounds a day, not idle waiting.
+          </p>
+        </div>
+        {(profile?.current_streak ?? 0) > 0 && (
+          <div className="whitespace-nowrap rounded-full border border-border bg-surface px-3 py-1.5 text-sm">
+            🔥 {profile?.current_streak}-day streak
+          </div>
+        )}
+      </div>
       <div className="mt-8">
-        <MiningHub species={species ?? []} attemptsUsedToday={attemptsUsedToday} />
+        <MiningHub species={species ?? []} attemptsUsedToday={attemptsUsedToday} userId={user.id} />
       </div>
     </div>
   );
